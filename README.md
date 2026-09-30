@@ -52,4 +52,12 @@ El producto eliminado ya no apareció en la consulta.
 
 ## Base de datos en la nube
 
-Para ejecutar la prueba local, Docker inicia la API y MongoDB. También se incluye en `terraform/` una configuración para crear una base MongoDB Atlas, pero todavía requiere una cuenta y credenciales de Atlas para aprovisionarla. La aplicación no está desplegada en la nube.
+El proyecto incluye `render.yaml` para publicar la API en Render con Docker. Para completar la publicación:
+
+1. En [MongoDB Atlas](https://www.mongodb.com/atlas), crea un proyecto y un clúster gratuito M0. Crea un usuario de base de datos y guarda su contraseña.
+2. En Atlas, en **Network Access**, agrega `0.0.0.0/0` para que Render pueda conectarse. Es una configuración sencilla para esta prueba; para producción se debe restringir el acceso.
+3. En [Render](https://render.com), crea un **Blueprint** conectado a este repositorio. Render leerá `render.yaml` y construirá la API.
+4. Cuando Render lo solicite, configura `MONGODB_URI` con la cadena de conexión de Atlas y agrega `/franquicias` como nombre de la base. No guardes esa cadena en GitHub.
+5. Cuando el despliegue termine, comprueba `https://TU-API.onrender.com/actuator/health`. Debe responder con `"status":"UP"`.
+
+Render puede tardar cerca de un minuto en responder la primera vez después de estar inactivo en el plan gratuito. Atlas M0 es gratuito y tiene límites de almacenamiento y capacidad. La carpeta `terraform/` también contiene una alternativa para crear Atlas con código, pero requiere instalar Terraform y configurar credenciales de Atlas.
