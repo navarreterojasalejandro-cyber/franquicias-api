@@ -1,83 +1,55 @@
 # API de franquicias
 
-API REST reactiva para administrar franquicias, sucursales y productos. Está construida con Spring Boot, Spring WebFlux, Spring Data MongoDB reactivo y MongoDB. Cada franquicia se almacena como un documento con sus sucursales y productos embebidos.
+Este proyecto sirve para crear franquicias, agregarles sucursales y administrar los productos y el stock de cada sucursal. Está hecho con Spring Boot y guarda los datos en MongoDB.
 
-## Requisitos
+## Cómo iniciarlo
 
-- Docker Desktop con Docker Compose, o Java 17+, Maven 3.9+ y MongoDB.
-- Para el entorno en nube: una cuenta/proyecto en MongoDB Atlas, Terraform 1.10+ y credenciales API de Atlas.
+1. Abre Docker Desktop.
+2. En una terminal, entra a la carpeta del proyecto y ejecuta:
 
-## Ejecutar con Docker
+   ```bash
+   docker compose up --build
+   ```
 
-Desde esta carpeta:
+3. Cuando termine, la API estará disponible en `http://localhost:8084`.
+4. Para comprobar que está activa, abre `http://localhost:8084/actuator/health`. Debe aparecer `"status":"UP"`.
 
-```bash
-docker compose up --build
-```
+Para detenerla, presiona `Ctrl+C` y ejecuta `docker compose down`. Los datos quedan guardados en Docker.
 
-La API queda en `http://localhost:8084`; MongoDB conserva los datos en el volumen `mongo_data`. Para detener los servicios, usa `docker compose down`. Para borrar también la base persistida, usa `docker compose down -v`.
+## Qué permite hacer
 
-## Ejecutar localmente
+- Crear y consultar franquicias.
+- Agregar sucursales a una franquicia.
+- Agregar productos, cambiarles el nombre, actualizar su stock y eliminarlos.
+- Consultar cuál es el producto con más stock de cada sucursal de una franquicia.
+- Cambiar el nombre de una franquicia o una sucursal.
 
-Inicia MongoDB en `mongodb://localhost:27017/franquicias` y luego ejecuta:
+## Rutas principales
 
-```bash
-mvn spring-boot:run
-```
+Todas empiezan con `/api/franquicias`.
 
-Puedes cambiar la conexión con `MONGODB_URI` y el puerto con `SERVER_PORT`.
-
-## MongoDB Atlas con Terraform
-
-La carpeta `terraform/` aprovisiona un clúster Atlas compartido M0, un usuario de base de datos con acceso de lectura/escritura a `franquicias` y una regla de red restringida al CIDR indicado. Requiere un proyecto Atlas existente. El M0 es adecuado para la prueba y tiene límites propios del nivel compartido.
-
-1. Exporta `MONGODB_ATLAS_CLIENT_ID` y `MONGODB_ATLAS_CLIENT_SECRET` para una clave de servicio de Atlas con permisos sobre el proyecto.
-2. Copia `terraform/terraform.tfvars.example` a `terraform/terraform.tfvars`; reemplaza el ID del proyecto, el CIDR público desde el que se conectará la API (`/32` para una IP) y la contraseña.
-3. Desde `terraform/`, ejecuta `terraform init`, `terraform plan` y `terraform apply`.
-4. Toma el hostname de `terraform output -raw atlas_srv_address` y configura la API con `MONGODB_URI=mongodb+srv://USUARIO:CONTRASEÑA@HOST/franquicias?retryWrites=true&w=majority`.
-
-No subas `terraform.tfvars`, credenciales ni el estado de Terraform al repositorio. El estado puede contener secretos; para un equipo, configura un backend remoto cifrado y acceso restringido. Para conectar una API desplegada, cambia `api_cidr` al rango de salida de ese servicio. Este Terraform aprovisiona la base de datos; la aplicación se puede desplegar como contenedor en el proveedor que elijas usando el `Dockerfile`.
-
-## Endpoints
-
-Todos los recursos están bajo `/api/franquicias`. Los cuerpos y respuestas usan JSON.
-
-| Método | Ruta | Acción |
+| Método | Ruta | Para qué sirve |
 |---|---|---|
-| `POST` | `/api/franquicias` | Crear franquicia: `{"name":"Café Central"}` |
-| `GET` | `/api/franquicias` | Listar franquicias |
-| `GET` | `/api/franquicias/{franchiseId}` | Obtener una franquicia con sucursales y productos |
-| `PATCH` | `/api/franquicias/{franchiseId}` | Cambiar el nombre de la franquicia |
-| `POST` | `/api/franquicias/{franchiseId}/sucursales` | Añadir sucursal: `{"name":"Centro"}` |
-| `PATCH` | `/api/franquicias/{franchiseId}/sucursales/{branchId}` | Cambiar el nombre de la sucursal |
-| `POST` | `/api/franquicias/{franchiseId}/sucursales/{branchId}/productos` | Añadir producto: `{"name":"Latte","stock":12}` |
-| `DELETE` | `/api/franquicias/{franchiseId}/sucursales/{branchId}/productos/{productId}` | Eliminar producto |
-| `PATCH` | `/api/franquicias/{franchiseId}/sucursales/{branchId}/productos/{productId}/stock` | Cambiar stock: `{"stock":25}` |
-| `PATCH` | `/api/franquicias/{franchiseId}/sucursales/{branchId}/productos/{productId}` | Cambiar nombre del producto |
-| `GET` | `/api/franquicias/{franchiseId}/productos-mayor-stock` | Producto con más stock por sucursal |
+| `POST` | `/` | Crear una franquicia (`{"name":"Café Central"}`) |
+| `POST` | `/{id}/sucursales` | Agregar una sucursal (`{"name":"Centro"}`) |
+| `POST` | `/{id}/sucursales/{sucursalId}/productos` | Agregar producto (`{"name":"Latte","stock":12}`) |
+| `DELETE` | `/{id}/sucursales/{sucursalId}/productos/{productoId}` | Eliminar un producto |
+| `PATCH` | `/{id}/sucursales/{sucursalId}/productos/{productoId}/stock` | Cambiar stock (`{"stock":25}`) |
+| `GET` | `/{id}/productos-mayor-stock` | Ver el producto con más stock de cada sucursal |
 
-Los IDs se generan automáticamente. La consulta de máximos devuelve una lista con el producto ganador de cada sucursal que tenga productos, junto con el nombre e ID de la sucursal. Si hay empate en una sucursal, devuelve uno de los productos empatados.
+También hay rutas `GET` para consultar franquicias y rutas `PATCH` para cambiar nombres. Los identificadores se generan automáticamente. El stock no puede ser negativo y los nombres no pueden quedar vacíos.
 
-Ejemplo de respuesta del endpoint de máximos:
+## Resultado de una prueba
 
-```json
-[
-  {
-    "branchId": "id-sucursal",
-    "branchName": "Centro",
-    "productId": "id-producto",
-    "productName": "Latte",
-    "stock": 25
-  }
-]
+Se probó crear una franquicia con dos sucursales, agregar productos, cambiar nombres y stock, eliminar un producto y consultar los productos con más stock. La API respondió correctamente (`UP`) y la consulta final mostró:
+
+```text
+Bogota Centro Actualizada: Capuccino Especial (stock 30)
+Medellin Norte: Cafe (stock 15)
 ```
 
-Los nombres no pueden estar vacíos y el stock debe ser cero o mayor. Los recursos inexistentes responden `404`, los datos inválidos `400` y los cambios concurrentes detectados `409`. La salud del servicio está disponible en `/actuator/health`.
+El producto eliminado ya no apareció en la consulta.
 
-## Diseño
+## Base de datos en la nube
 
-- WebFlux y Project Reactor (`Mono`/`Flux`) para controladores, servicios y repositorio no bloqueantes.
-- MongoDB reactivo como persistencia, con franquicia, sucursales y productos en un único documento agregado.
-- IDs UUID independientes para franquicias, sucursales y productos.
-- Control optimista de concurrencia con `@Version` en el documento de franquicia.
-- Compose levanta API y base de datos con comprobación de salud de MongoDB.
+Para ejecutar la prueba local, Docker inicia la API y MongoDB. También se incluye en `terraform/` una configuración para crear una base MongoDB Atlas, pero todavía requiere una cuenta y credenciales de Atlas para aprovisionarla. La aplicación no está desplegada en la nube.
