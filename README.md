@@ -19,16 +19,15 @@ Detén la aplicación con `Ctrl+C` y luego ejecuta `docker compose down`. Los da
 
 ### Usar MongoDB Atlas
 
-La API también puede conectarse a Atlas. En Atlas, crea un usuario de base de datos con el rol `readWrite` únicamente en la base `franquicias`, agrega la IP de tu equipo en **Network Access** y copia la cadena de conexión del clúster.
+La API se conecta a Atlas mediante la variable `MONGODB_URI`. En Atlas, usa un usuario de base de datos con el rol `readWrite` únicamente en la base `franquicias` y agrega la IP de tu equipo en **Network Access**.
 
-En PowerShell, configura la cadena como variable de entorno antes de iniciar Docker:
+En la carpeta del proyecto (junto a `compose.yaml`), crea un archivo `.env` con la cadena del clúster. El archivo debe tener este formato:
 
-```powershell
-$env:MONGODB_URI = "mongodb+srv://USUARIO:CONTRASEÑA@TU-CLUSTER.mongodb.net/franquicias?retryWrites=true&w=majority"
-docker compose up --build
+```text
+MONGODB_URI=mongodb+srv://USUARIO:CONTRASEÑA@TU-CLUSTER.mongodb.net/franquicias?retryWrites=true&w=majority
 ```
 
-Reemplaza los valores de ejemplo por los de Atlas. No compartas ni subas la cadena real al repositorio. El archivo `.gitignore` excluye los archivos `.env` para evitar publicar credenciales.
+Reemplaza los valores de ejemplo por los de Atlas. Después ejecuta `docker compose up --build`. No compartas ni subas la cadena real al repositorio: `.env` está excluido por `.gitignore`.
 
 ## Operaciones disponibles
 
@@ -89,33 +88,29 @@ La consulta omite sucursales que todavía no tienen productos. Si hay empate en 
 - Dockerfile y Docker Compose para ejecutar la solución localmente.
 - Carpeta `terraform/` con configuración de ejemplo para aprovisionar recursos en MongoDB Atlas.
 
-## Resultado de una prueba
+## Resultado visible en MongoDB Atlas
 
-En la API local se consultó una franquicia con dos sucursales y se verificó el chequeo de salud:
+Se creó la franquicia `Franquicia Demo Entrega` en Atlas y se recorrieron las operaciones de creación, actualización y eliminación. La API respondió `UP`; se confirmaron dos sucursales guardadas y que el producto temporal eliminado ya no aparecía.
 
-```json
-{"groups":["liveness","readiness"],"status":"UP"}
-```
-
-La ruta `GET /api/franquicias/{franchiseId}/productos-mayor-stock` devolvió el producto con más stock de cada sucursal:
+La ruta `GET /api/franquicias/724658df-ad18-4dee-bd58-aea8365c0e6d/productos-mayor-stock` devolvió un producto por sucursal:
 
 ```json
 [
   {
-    "branchId": "58bff7f9-53e3-4a47-a26c-579a81028c3d",
+    "branchId": "5c81a848-77e7-4be3-9f70-cd466d39890b",
     "branchName": "Bogota Centro Actualizada",
-    "productId": "ada3b52c-4b6d-44e4-8d9a-51e510dfbad8",
-    "productName": "Capuccino Especial",
-    "stock": 30
+    "productId": "eb8cfb3e-c45a-46e0-97a5-4d388a464c22",
+    "productName": "Cafe Especial",
+    "stock": 32
   },
   {
-    "branchId": "73d5fc3a-b369-4aba-ae6e-ace05c347001",
+    "branchId": "2b854364-3bb5-4062-b08e-4a5f4e24ae4b",
     "branchName": "Medellin Norte",
-    "productId": "ee7e8c4b-bca2-469e-8073-9d83a4f73dd9",
-    "productName": "Cafe",
-    "stock": 15
+    "productId": "d7b24791-4428-4247-8f6d-48ccff5f252c",
+    "productName": "Cafe en Grano",
+    "stock": 25
   }
 ]
 ```
 
-La franquicia ya contiene los nombres actualizados. En la prueba del flujo también se verificó que el producto eliminado dejó de aparecer.
+La franquicia de demostración permanece guardada en Atlas para que el resultado se pueda consultar con ese endpoint.
