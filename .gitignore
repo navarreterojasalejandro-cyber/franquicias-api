@@ -3,6 +3,9 @@ target/
 .vscode/
 *.iml
 *.log
+.env
+.env.*
+!.env.example
 terraform/.terraform/
 terraform/terraform.tfstate
 terraform/terraform.tfstate.*
