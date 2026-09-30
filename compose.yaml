@@ -1,0 +1,28 @@
+services:
+  api:
+    build: .
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/franquicias
+      SERVER_PORT: 8080
+    ports:
+      - "8084:8080"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:8
+    environment:
+      MONGO_INITDB_DATABASE: franquicias
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  mongo_data:

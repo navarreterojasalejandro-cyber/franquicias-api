@@ -1,0 +1,5 @@
+project_id        = "YOUR_ATLAS_PROJECT_ID"
+api_cidr          = "YOUR_PUBLIC_IP/32"
+database_username = "franquicias_api"
+database_password = "replace-with-a-strong-password"
+atlas_region      = "US_EAST_1"
