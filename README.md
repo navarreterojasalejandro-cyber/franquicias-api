@@ -91,11 +91,31 @@ La consulta omite sucursales que todavía no tienen productos. Si hay empate en 
 
 ## Resultado de una prueba
 
-En una prueba local se creó una franquicia con dos sucursales, se agregaron productos, se actualizaron nombres y existencias, y se eliminó un producto. La API respondió `UP` en el chequeo de salud. La consulta final mostró:
+En la API local se consultó una franquicia con dos sucursales y se verificó el chequeo de salud:
 
-```text
-Bogota Centro Actualizada: Capuccino Especial (stock 30)
-Medellin Norte: Cafe (stock 15)
+```json
+{"groups":["liveness","readiness"],"status":"UP"}
 ```
 
-El producto eliminado ya no apareció en el resultado.
+La ruta `GET /api/franquicias/{franchiseId}/productos-mayor-stock` devolvió el producto con más stock de cada sucursal:
+
+```json
+[
+  {
+    "branchId": "58bff7f9-53e3-4a47-a26c-579a81028c3d",
+    "branchName": "Bogota Centro Actualizada",
+    "productId": "ada3b52c-4b6d-44e4-8d9a-51e510dfbad8",
+    "productName": "Capuccino Especial",
+    "stock": 30
+  },
+  {
+    "branchId": "73d5fc3a-b369-4aba-ae6e-ace05c347001",
+    "branchName": "Medellin Norte",
+    "productId": "ee7e8c4b-bca2-469e-8073-9d83a4f73dd9",
+    "productName": "Cafe",
+    "stock": 15
+  }
+]
+```
+
+La franquicia ya contiene los nombres actualizados. En la prueba del flujo también se verificó que el producto eliminado dejó de aparecer.
